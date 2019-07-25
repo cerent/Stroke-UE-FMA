@@ -6,10 +6,10 @@ Each method was trained with two loops (outer and inner) of k-fold cross validat
 
 ---
 
-The codes provided in this repository were used to perform machine learning methods to 
-1. predict a chronic stroke individual’s motor function (Upper-extremity Fugl-Meyer Assessment (UE-FMA) after 6 weeks of intervention using pre-intervention demographic, clinical, neurophysiological and imaging data,
-2. identify which data elements were most important in predicting chronic stroke patients’ impairment after 6 weeks of intervention,
-3. to classify stroke patients based on their significant motor outcome (UE-FMA) change after therapy. 
+The codes provided in this repository were used to perform machine learning methods in 
+1. predicting a chronic stroke individual’s motor function (Upper-extremity Fugl-Meyer Assessment (UE-FMA) after 6 weeks of intervention using pre-intervention demographic, clinical, neurophysiological and imaging data,
+2. identifying which data elements were most important in predicting chronic stroke patients’ impairment after 6 weeks of intervention,
+3. to classifying stroke patients based on their significant motor outcome (UE-FMA) change after therapy. 
 
 Please find the manuscript via [link](https://www.biorxiv.org/content/10.1101/457416v1 ) 
 
