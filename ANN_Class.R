@@ -104,40 +104,15 @@ result_parallel<-foreach(it=rep(1:10,10), .combine = rbind,.multicombine=TRUE,
                                                                  
                                                                  validationData <- trainData[folds_outerloop_inner == innerloop, ]
                                                                  
-                                                                 
-                                                                 # Normalize training dataset
-                                                                 performScaling <- TRUE  # Turn it on/off for experimentation.
-
-                                                                 if (performScaling) {
-
-                                                                   # Loop over each column.
-                                                                   for (colName in names(trainingData)) {
-
-                                                                     # Check if the column contains numeric data.
-                                                                     if(class(trainingData[,colName]) == 'integer' | class(trainingData[,colName]) == 'numeric') {
-
-                                                                       # Scale this column (scale() function applies z-scaling).
-                                                                       trainingData[,colName] <- as.numeric(scale(trainingData[,colName]))
-                                                                     }
-                                                                   }
-                                                                 }
-                                                                 
-                                                                 
-                                                                 # Balance the normalized training dataset
-                                                                 library(DMwR)
-                                                                 trainingData_smote <- SMOTE(Output_class ~ ., trainingData, perc.over = 100)
-                                                                 
                                                                  # Fit the model using a couple of the hyperparameters
-                                                                 innermodel_ann_prob<- nnet(Output_class ~ .,  data = trainingData_smote,size=size1,decay=decay1,probability=TRUE,
+                                                                 innermodel_ann_prob<- nnet(Output_class ~ .,  data = trainingData,size=size1,decay=decay1,probability=TRUE,
                                                                                             maxit = 300,  trace = F, linout = F,MaxNWts=50000)
                                                                  
-                                                                 # Normalize the validation dataset using the information of training dataset
-                                                                 normParam <- preProcess(trainingData_smote)
-                                                                 norm.validationData <- predict(normParam, validationData)
+                                                               
                                                                  # Predict the validation dataset
-                                                                 predict_validation_ann_prob<-predict(innermodel_ann_prob,norm.validationData)
+                                                                 predict_validation_ann_prob<-predict(innermodel_ann_prob,validationData)
                                                                  err_cv[innerloop,1]<-innerloop
-                                                                 err_cv[innerloop,2]<- auc(roc(norm.validationData$Output_class,predict_validation_ann_prob,plot=FALSE,direction="auto",quiet = TRUE))
+                                                                 err_cv[innerloop,2]<- auc(roc(validationData$Output_class,predict_validation_ann_prob,plot=FALSE,direction="auto",quiet = TRUE))
                                                                }
                                                                err_cv1<-rbind(err_cv1,err_cv)
                                                              }
@@ -156,44 +131,18 @@ result_parallel<-foreach(it=rep(1:10,10), .combine = rbind,.multicombine=TRUE,
                                                          best_size<-error_innerloop[which.max(error_innerloop[,3]),1]
                                                          best_decay<-error_innerloop[which.max(error_innerloop[,3]),2]
                                                          
-                                                         
-                                                         # Normalize the train dataset
-                                                         library(DMwR)
-                                                         # Normalize training dataset
-                                                         performScaling <- TRUE  # Turn it on/off for experimentation.
-
-                                                         if (performScaling) {
-
-                                                           # Loop over each column.
-                                                           for (colName in names(trainData)) {
-
-                                                             # Check if the column contains numeric data.
-                                                             if(class(trainData[,colName]) == 'integer' | class(trainData[,colName]) == 'numeric') {
-
-                                                               # Scale this column (scale() function applies z-scaling).
-                                                               trainData[,colName] <- as.numeric(scale(trainData[,colName]))
-                                                             }
-                                                           }
-                                                         }
-
-                                                         # Balance the normalized train dataset
-                                                         trainData_SMOTE <- SMOTE(Output_class ~ ., trainData, perc.over = 100)
-                                                         
+                      
                                                          # Fit the model with best hyperparameters using train data (PROBA)
-                                                         tunedModel_prob<- nnet(Output_class ~ .,  data = trainData_SMOTE,size=best_size,decay=best_decay,probability=TRUE,
+                                                         tunedModel_prob<- nnet(Output_class ~ .,  data = trainData,size=best_size,decay=best_decay,probability=TRUE,
                                                                                 maxit = 300,  trace = F, linout = F,MaxNWts=50000)
                                                          
-                                                         
-                                                         # Normalize the test dataset using the information of train dataset
-                                                         normParam <- preProcess(trainData_SMOTE)
-                                                         norm.testData <- predict(normParam, testData)
-                                                         
+                                                       
                                                          # Predict the model using test data
-                                                         ann_predict_proba <- predict(tunedModel_prob, norm.testData,probability = TRUE) 
+                                                         ann_predict_proba <- predict(tunedModel_prob, testData,probability = TRUE) 
                                                          
                                                          # Calculate AUC
                                                          require(PRROC)
-                                                         auc_test<- auc(roc(norm.testData$Output_class,ann_predict_proba,plot=FALSE,direction="auto",quiet = TRUE))
+                                                         auc_test<- auc(roc(testData$Output_class,ann_predict_proba,plot=FALSE,direction="auto",quiet = TRUE))
                                                          
                                                          # Predict the class for the test dataset
                                                          ann_predict_class<-predict(tunedModel_prob, norm.testData, type="class")
@@ -201,7 +150,7 @@ result_parallel<-foreach(it=rep(1:10,10), .combine = rbind,.multicombine=TRUE,
                                                          #### Confusion Matrix ###  
                                                          library(caret)
                                                          ann_predict_class2<-as.factor(as.numeric(as.factor(ann_predict_class))-1)
-                                                         truth<-as.factor(norm.testData$Output_class)
+                                                         truth<-as.factor(testData$Output_class)
                                                          levels(ann_predict_class2)=levels(truth)
                                                          
                                                          result <- confusionMatrix(ann_predict_class2,truth,positive="1")
@@ -225,7 +174,7 @@ result_parallel<-foreach(it=rep(1:10,10), .combine = rbind,.multicombine=TRUE,
                                                          var_imp<-varImp(tunedModel_prob_varimp)
                                                          var_imp<-as.data.frame(var_imp$Overall)
                                                          names_data<-as.data.frame(names(data_used))
-                                                         names_data1<-as.matrix(names_data[-which(names(trainData_SMOTE) %in% "Output_class"),])
+                                                         names_data1<-as.matrix(names_data[-which(names(trainData) %in% "Output_class"),])
                                                          var_imp1<-cbind(names_data1,var_imp)
                                                          var_imp2<-as.data.frame(var_imp1)
                                                          var_imp_matrix<-cbind(var_imp_matrix,as.matrix(var_imp2[,2]))
